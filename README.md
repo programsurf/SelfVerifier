@@ -72,14 +72,15 @@ model = pickle.loads(verifier.model_data_bytes)  # Extract model
 - PyTorch
 - PQClean ML-DSA-44 library (compiled as `libmldsa44.so`)
 
-### Build ML-DSA Library
 
-```bash
-cd ML-DSA
-./setting.sh
-```
+## Prerequisites
 
-This compiles the PQClean ML-DSA-44 implementation into a shared library.
+### Download models & Build ML-DSA library
+
+See [about-pickle_internal/README.md](about-pickle_internal/README.md#prerequisites) for setup instructions.
+
+> **Note:** `models_defense/` and `models_attack/` directories are automatically generated when running the test scripts.
+
 
 ## Usage
 
