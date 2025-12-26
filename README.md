@@ -64,9 +64,9 @@ verifier = torch.load('signed_model.pt')  # Auto-verifies signature
 model = pickle.loads(verifier.model_data_bytes)  # Extract model
 ```
 
-## Installation
+## Prerequisites
 
-### Prerequisites
+### Installation
 
 - Python 3.8+
 - PyTorch
