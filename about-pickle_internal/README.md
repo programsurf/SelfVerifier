@@ -19,11 +19,11 @@ about-pickle_internal/
 ### `models/`
 Original unsigned PyTorch model files used as source for signing.
 
-| File | Size | Description |
-|------|------|-------------|
-| `small_model.pt` | 87 MB | Small test model |
-| `medium_model.pt` | 2.5 GB | Medium test model |
-| `large_model.pt` | 12.4 GB | Large test model |
+| File | Size | Model | Source |
+|------|------|-------|--------|
+| `small_model.pt` | 87 MB | all-MiniLM-L6-v2 | [sentence-transformers/all-MiniLM-L6-v2](https://huggingface.co/sentence-transformers/all-MiniLM-L6-v2) |
+| `medium_model.pt` | 2.5 GB | OPT-1.3B | [facebook/opt-1.3b](https://huggingface.co/facebook/opt-1.3b) |
+| `large_model.pt` | 12.4 GB | OPT-6.7B | [facebook/opt-6.7b](https://huggingface.co/facebook/opt-6.7b) |
 
 ### `models_defense/`
 Signed models with ML-DSA-44 cryptographic signatures. These models are protected against tampering.
